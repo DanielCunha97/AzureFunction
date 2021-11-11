@@ -1,4 +1,5 @@
 ﻿using AzureFunctionApp.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,9 +10,16 @@ namespace AzureFunctionApp.Services
 {
     public class LogService : ILogService
     {
+        private ILogger _log;
+        public LogService(ILogger log)
+        {
+            _log = log;
+        }
+
         public void InsertLog (string rlog)
         {
             var dbConStr = Environment.GetEnvironmentVariable("ConnectionStrings:DbConnectionStr");
+            _log.LogInformation("Connection string: " + dbConStr);
             using (var connection = new SqlConnection(dbConStr))
             {
                 LogRequest logRequest = new LogRequest();
