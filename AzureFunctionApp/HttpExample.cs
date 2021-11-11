@@ -1,5 +1,7 @@
 using System;
+using System.Configuration;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -7,6 +9,11 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Data.SqlClient;
+
+using AzureFunctionApp.Models;
+using Microsoft.Extensions.Configuration;
+using AzureFunctionApp.Services;
 
 namespace AzureFunctionApp
 {
@@ -17,17 +24,36 @@ namespace AzureFunctionApp
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            string name = string.Empty;
+            string finalLog = string.Empty;
             log.LogInformation("C# HTTP trigger function processed a request.");
+            var successful =true;
+            try
+            {
+                name = req.Query["log"];
+                if (!string.IsNullOrEmpty(name)) //pass parameter by query
+                {                  
+                    dynamic data = JsonConvert.DeserializeObject(name);
+                    finalLog = name ?? data?.name;
+                }
+                else //pass parameter by body
+                {
+                    finalLog = await new StreamReader(req.Body).ReadToEndAsync();
+                }
 
-            string name = req.Query["name"];
+                ILogService logService = new LogService();
+                logService.InsertLog(finalLog);
+                log.LogInformation("Log added to database successfully!");
+            }
+            catch (Exception ex)
+            {
+                log.LogInformation($"Exception: {ex}");
+                successful = false;
+            }
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            return successful && string.IsNullOrEmpty(name)
+                    ? (ActionResult)new OkObjectResult("Data saved successfully!") : successful && !string.IsNullOrEmpty(name) 
+                    ? (ActionResult)new OkObjectResult($"Name: {name}...") : new BadRequestObjectResult("Unable to process your request!");
         }
     }
 }
