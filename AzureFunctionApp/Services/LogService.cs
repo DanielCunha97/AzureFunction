@@ -18,7 +18,7 @@ namespace AzureFunctionApp.Services
 
         public void InsertLog (string rlog)
         {
-            var dbConStr = Environment.GetEnvironmentVariable("ConnectionStrings:DbConnectionStr");
+            var dbConStr = Environment.GetEnvironmentVariable("DbConnectionStr");
             _log.LogInformation("Connection string: " + dbConStr);
             using (var connection = new SqlConnection(dbConStr))
             {
