@@ -35,7 +35,7 @@ namespace AzureFunctionApp
                     finalLog = await new StreamReader(req.Body).ReadToEndAsync();
                 }
 
-                ILogService logService = new LogService();
+                ILogService logService = new LogService(log);
                 logService.InsertLog(finalLog);
                 log.LogInformation("Log added to database successfully!");
             }
