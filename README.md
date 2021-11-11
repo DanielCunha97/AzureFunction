@@ -1,6 +1,6 @@
 # AzureFunction
-This is an Azure Function that insert logs into an Azure sql server. 
-We can insert logs from two ways:
+This is an Azure Function that inserts logs into an Azure sql server database. 
+We can insert records in two ways:
   - By Request Body: 
           - https://azurefunctionapp20211111105214.azurewebsites.net/api/HttpExample
           - {  
