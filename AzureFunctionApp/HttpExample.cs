@@ -8,13 +8,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using AzureFunctionApp.Services;
+using AzureFunctionApp.Models;
 
 namespace AzureFunctionApp
 {
     public static class HttpExample
     {
         [FunctionName("HttpExample")]
-        public static async Task<IActionResult> Run(
+        public static async Task<ActionResult<LogResponse>> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
@@ -22,6 +23,7 @@ namespace AzureFunctionApp
             string finalLog = string.Empty;
             log.LogInformation("C# HTTP trigger function processed a request.");
             var successful =true;
+            ILogService logService = new LogService(log);
             try
             {
                 name = req.Query["log"];
@@ -35,7 +37,6 @@ namespace AzureFunctionApp
                     finalLog = await new StreamReader(req.Body).ReadToEndAsync();
                 }
 
-                ILogService logService = new LogService(log);
                 logService.InsertLog(finalLog);
                 log.LogInformation("Log added to database successfully!");
             }
@@ -45,9 +46,8 @@ namespace AzureFunctionApp
                 successful = false;
             }
 
-            return successful && string.IsNullOrEmpty(name)
-                    ? (ActionResult)new OkObjectResult("Data saved successfully!") : successful && !string.IsNullOrEmpty(name) 
-                    ? (ActionResult)new OkObjectResult($"Name: {name}...") : new BadRequestObjectResult("Unable to process your request!");
+            return successful
+                    ? (ActionResult)new OkObjectResult(logService.SelectLogs()) : new BadRequestObjectResult("Unable to process your request!");
         }
     }
 }
